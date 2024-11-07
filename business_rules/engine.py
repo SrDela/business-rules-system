@@ -1,9 +1,12 @@
 from .fields import FIELD_NO_INPUT
 
-def run_all(rule_list,
-            defined_variables,
-            defined_actions,
-            stop_on_first_trigger=False):
+
+def run_all(
+    rule_list,
+    defined_variables,
+    defined_actions,
+    stop_on_first_trigger=False
+):
 
     rule_was_triggered = False
     for rule in rule_list:
@@ -14,9 +17,12 @@ def run_all(rule_list,
                 return True
     return rule_was_triggered
 
+
 def run(rule, defined_variables, defined_actions):
     conditions, actions = rule['conditions'], rule['actions']
-    rule_triggered = check_conditions_recursively(conditions, defined_variables)
+    rule_triggered = check_conditions_recursively(
+        conditions, defined_variables
+    )
     if rule_triggered:
         do_actions(actions, defined_actions)
         return True
@@ -45,14 +51,18 @@ def check_conditions_recursively(conditions, defined_variables):
         assert not ('any' in keys or 'all' in keys)
         return check_condition(conditions, defined_variables)
 
+
 def check_condition(condition, defined_variables):
     """ Checks a single rule condition - the condition will be made up of
     variables, values, and the comparison operator. The defined_variables
     object must have a variable defined for any variables in this condition.
     """
-    name, op, value = condition['name'], condition['operator'], condition['value']
+    name, op, value = (
+        condition['name'], condition['operator'], condition['value']
+    )
     operator_type = _get_variable_value(defined_variables, name)
     return _do_operator_comparison(operator_type, op, value)
+
 
 def _get_variable_value(defined_variables, name):
     """ Call the function provided on the defined_variables object with the
@@ -67,6 +77,7 @@ def _get_variable_value(defined_variables, name):
     method = getattr(defined_variables, name, fallback)
     val = method()
     return method.field_type(val)
+
 
 def _do_operator_comparison(operator_type, operator_name, comparison_value):
     """ Finds the method on the given operator_type and compares it to the
@@ -88,9 +99,14 @@ def _do_operator_comparison(operator_type, operator_name, comparison_value):
 def do_actions(actions, defined_actions):
     for action in actions:
         method_name = action['name']
+
         def fallback(*args, **kwargs):
-            raise AssertionError("Action {0} is not defined in class {1}"\
-                    .format(method_name, defined_actions.__class__.__name__))
+            raise AssertionError(
+                "Action {0} is not defined in class {1}".format(
+                    method_name, defined_actions.__class__.__name__
+                )
+            )
+
         params = action.get('params') or {}
         method = getattr(defined_actions, method_name, fallback)
         method(**params)
